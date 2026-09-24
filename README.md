@@ -63,7 +63,7 @@ Exemplo de prompt neutro para a demonstração:
 
 > O cadastro apresentou erro. Investigue usando exclusivamente o Ansible via MCP, correlacione os logs com o horário e o ID da requisição e apresente as evidências. Não consulte código-fonte ou arquivos locais.
 
-Use uma sessão nova em `/home/csantana/Projetos/workspace-trabalho`, que contém somente configuração MCP e instruções operacionais. O token é carregado por `http_headers_helper` de um arquivo privado fora desse workspace, sem exportação manual. A pasta foi marcada como confiável para carregar sua configuração de projeto. `codex` ou `./iniciar-codex` iniciam o cliente ali. Separação de contexto e instruções não equivalem a isolamento de filesystem.
+Use uma sessão nova em `/home/csantana/Projetos/caixa-ai/workspace-trabalho`, que contém somente configuração MCP e instruções operacionais. O token é carregado por `http_headers_helper` de um arquivo privado fora desse workspace, sem exportação manual. A pasta foi marcada como confiável para carregar sua configuração de projeto. `codex` ou `./iniciar-codex` iniciam o cliente ali. Separação de contexto e instruções não equivalem a isolamento de filesystem.
 
 ## Reprodução
 

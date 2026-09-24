@@ -62,7 +62,7 @@ Proteções verificadas: POST sem origem/cabeçalho retorna 403; tentar outro in
 
 ## Workspace operacional e defeito de e-mail — melhoria posterior
 
-Implantação AAP job 37 successful, revisão 2d5dd4d. Workspace criado em `/home/csantana/Projetos/workspace-trabalho`, fora do projeto e sem cópia do código ou dos roteiros. Configuração de projeto reconhecida por `codex mcp get aap`, com autenticação automática por helper; initialize e tools/list passaram usando esse helper. Instruções exigem investigação via MCP e proíbem consulta ao código, diretórios vizinhos e histórico. É separação de contexto, não isolamento de filesystem. Não foi executado um turno de modelo nessa pasta; a validação cobre carregamento da configuração, autenticação e protocolo MCP.
+Implantação AAP job 37 successful, revisão 2d5dd4d. Workspace criado em `/home/csantana/Projetos/caixa-ai/workspace-trabalho`, fora do repositório ansible-ai-demo e sem cópia do código ou dos roteiros. Configuração de projeto reconhecida por `codex mcp get aap`, com autenticação automática por helper; initialize e tools/list passaram usando esse helper. Instruções exigem investigação via MCP e proíbem consulta ao código, diretórios vizinhos e histórico. É separação de contexto, não isolamento de filesystem. Não foi executado um turno de modelo nessa pasta; a validação cobre carregamento da configuração, autenticação e protocolo MCP.
 
 O formulário permitiu enviar e-mail inválido: HTTP 500 e request ID `98e1619d-28a7-422e-9897-e7b5260ae999`. A coleta pelo MCP no job 39 correlacionou esse ID com `UNHANDLED_EXCEPTION`, `EmailValidationException` e stack trace em `Application.validateEmail`. O job 40 reproduziu a entrada inválida e coletou evidências sem explicação pré-programada da causa.
 
