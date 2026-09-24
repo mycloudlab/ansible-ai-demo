@@ -45,3 +45,17 @@ Não há MCP nativo no cluster AAP, integração de tickets, teste Lightspeed/Op
 EC2 `i-07fc1db76ec70bc27`, VPC `vpc-0ccedacfe92314152`, subnet `subnet-0a17970d38dcc3df2`, security group `sg-0797f077714b427d0`. IPv4 atual `52.91.33.162`. Portas 22/8080 limitadas ao operador; 22 também ao IP de saída AAP observado. Nenhuma porta PostgreSQL pública.
 
 Estado de provisionamento, chave privada, PAT e logs completos estão em diretório privado fora do Git. Não incluir esses arquivos em apresentações. Os recursos continuam ativos; encerramento descrito no README.
+
+## Painel do apresentador — validação adicional em 24/09/2026
+
+Deploy AAP job 25 successful, revisão 3f4d15f. Os três botões foram acionados pelo navegador em `/demo`, com confirmação visual das mudanças de estado:
+
+| Cenário pelo painel | Diagnóstico/evidência via MCP | Recuperação via MCP | Resultado |
+|---|---:|---:|---|
+| Parar banco | job 27 | job 28 | saúde 503, PostgreSQL inativo, recuperação 200/201 |
+| Erro de validação | job 29 | Limpeza pelo apresentador | cadastro 500 com request ID/evento, após limpeza 201 |
+| Provocar OOM | job 30 | job 31 | JVM failed, painel 200, banco ativo; recuperação 200/201 |
+
+O log do job 30 confirmou `OOM_DEMO_TRIGGER_CONSUMED` e `OutOfMemoryError`. O painel ficou acessível durante a queda da JVM. As chamadas de diagnóstico, polling, stdout JSON e recuperação ocorreram pelo servidor MCP oficial com o PAT operacional. Não foram necessários credenciais administrativas AAP nem SSH para injetar pelo painel e recuperar pelo MCP.
+
+Proteções verificadas: POST sem origem/cabeçalho retorna 403; tentar outro incidente durante banco parado retorna 409; ação desconhecida retorna 404. O estado final apresenta Java e banco ativos, validação normal e nenhum gatilho OOM pendente. Java compilado e testes unitários aprovados; Python compilado e sintaxe do playbook validada. O arquivo `.codex/config.toml` tinha alterações locais anteriores e foi preservado.
