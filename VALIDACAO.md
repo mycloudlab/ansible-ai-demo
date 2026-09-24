@@ -59,3 +59,13 @@ Deploy AAP job 25 successful, revisão 3f4d15f. Os três botões foram acionados
 O log do job 30 confirmou `OOM_DEMO_TRIGGER_CONSUMED` e `OutOfMemoryError`. O painel ficou acessível durante a queda da JVM. As chamadas de diagnóstico, polling, stdout JSON e recuperação ocorreram pelo servidor MCP oficial com o PAT operacional. Não foram necessários credenciais administrativas AAP nem SSH para injetar pelo painel e recuperar pelo MCP.
 
 Proteções verificadas: POST sem origem/cabeçalho retorna 403; tentar outro incidente durante banco parado retorna 409; ação desconhecida retorna 404. O estado final apresenta Java e banco ativos, validação normal e nenhum gatilho OOM pendente. Java compilado e testes unitários aprovados; Python compilado e sintaxe do playbook validada. O arquivo `.codex/config.toml` tinha alterações locais anteriores e foi preservado.
+
+## Workspace operacional e defeito de e-mail — melhoria posterior
+
+Implantação AAP job 37 successful, revisão 2d5dd4d. Workspace criado em `/home/csantana/Projetos/workspace-trabalho`, fora do projeto e sem cópia do código ou dos roteiros. Configuração de projeto reconhecida por `codex mcp get aap`, com autenticação automática por helper; initialize e tools/list passaram usando esse helper. Instruções exigem investigação via MCP e proíbem consulta ao código, diretórios vizinhos e histórico. É separação de contexto, não isolamento de filesystem. Não foi executado um turno de modelo nessa pasta; a validação cobre carregamento da configuração, autenticação e protocolo MCP.
+
+O formulário permitiu enviar e-mail inválido: HTTP 500 e request ID `98e1619d-28a7-422e-9897-e7b5260ae999`. A coleta pelo MCP no job 39 correlacionou esse ID com `UNHANDLED_EXCEPTION`, `EmailValidationException` e stack trace em `Application.validateEmail`. O job 40 reproduziu a entrada inválida e coletou evidências sem explicação pré-programada da causa.
+
+Um e-mail válido enviado imediatamente depois retornou 201, sem reset. A validação não lê flags nem exige ativação. A antiga ação HTTP de ativação retorna 404. A exceção escapa da camada de negócio; o limite HTTP apenas registra stack trace e responde erro genérico, preservando request ID sem registrar o valor do e-mail. Seis testes locais passaram, incluindo um teste HTTP de status, correlação e ausência de dados da entrada no log/resposta.
+
+Painel atualizado com link para cadastro contendo e-mail inválido e prompt neutro. Serviço Java, PostgreSQL e painel permaneceram ativos ao final. As alterações locais preexistentes em `.codex/config.toml` do repositório foram preservadas.
