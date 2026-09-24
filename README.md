@@ -25,12 +25,12 @@ O IP público é dinâmico: parar/iniciar a EC2 pode exigir atualização do inv
 | CAIXA recover_application | 16 | Agente | Preserva evidência, remove gatilho e reinicia Java |
 | CAIXA validation_evidence | 17 | Agente | Reproduz erro e coleta evidências para chamado |
 | CAIXA fault_database_stop | 18 | Administrador | Para somente o banco da demo |
-| CAIXA fault_validation | 19 | Administrador | Ativa erro de validação deliberado |
+| CAIXA fault_validation | 19 | Administrador | Envia cadastro com e-mail inválido |
 | CAIXA fault_oom_once | 20 | Administrador | Ativa OOM de heap uma única vez |
-| CAIXA reset_validation | 21 | Administrador | Restaura baseline de validação |
+| CAIXA reset_validation | 21 | Administrador | Verifica cadastro com e-mail válido |
 
 1. **Banco parado:** administrador executa 18; saúde/cadastro retornam 503. Agente executa 13, identifica PostgreSQL parado, executa 15 e confirma saúde 200/cadastro 201.
-2. **Defeito de validação:** administrador executa 19. Um cadastro válido retorna 500 com request ID e evento `VALIDATION_RULE_DEMO`; entrada inválida continua retornando 400. Agente executa 17, prepara evidências e encaminhamento ao desenvolvimento. Nenhum sistema de chamados foi integrado e nenhum chamado real é aberto. Administrador executa 21 para preparar a próxima demonstração.
+2. **Defeito de validação:** envie nome preenchido e e-mail `email-invalido` pelo formulário. O servidor lança `EmailValidationException`, que não é tratada na camada de negócio; o limite HTTP registra stack trace com request ID e responde 500 genérico. O esperado seria 400 para entrada inválida. O template 17 reproduz a entrada e coleta evidências sem antecipar a causa. Não existe flag ou reset: e-mail válido continua retornando 201. O template administrativo 19 apenas reproduz essa mesma requisição; 21 verifica uma entrada válida. Nenhum chamado real é aberto.
 3. **OOM isolado:** administrador executa 20. A aplicação consome o arquivo de gatilho antes de alocar memória; a JVM registra `OutOfMemoryError` e encerra. Agente executa 13 e 16 e confirma recuperação. Reiniciar é mitigação; retirar o defeito de alocação exige correção de código. O gatilho consumido impede repetição automática após restart.
 
 Não executar injeções em paralelo. Os jobs guardam evidências e podem conter IDs de requisição, mas a aplicação não registra nome, email nem senha. As verificações usam somente dados fictícios `example.invalid`.
@@ -59,9 +59,11 @@ Endpoint: `http://127.0.0.1:3017/mcp/caixa_demo`. Quatro ferramentas: `job_templ
 
 O serviço local inicia com a sessão de usuário; não habilitamos linger. Se trocar o endpoint AAP, atualizar `config/aap-mcp.yaml` e reinstalar/reiniciar o serviço.
 
-Exemplo de prompt para a demonstração:
+Exemplo de prompt neutro para a demonstração:
 
-> Use somente o MCP aap. Liste os templates CAIXA acessíveis, execute diagnose, acompanhe o job e leia stdout. Explique a evidência antes de agir. Para banco parado, use recover_database; para JVM encerrada por OOM, preserve a evidência e use recover_application como mitigação. Para erro de validação, use validation_evidence e prepare um resumo de chamado sem enviá-lo. Confirme o estado final pelos resultados dos jobs. Não use SSH, não altere inventário e não injete falhas.
+> O cadastro apresentou erro. Investigue usando exclusivamente o Ansible via MCP, correlacione os logs com o horário e o ID da requisição e apresente as evidências. Não consulte código-fonte ou arquivos locais.
+
+Use uma sessão nova em `/home/csantana/Projetos/workspace-trabalho`, que contém somente configuração MCP e instruções operacionais. O token é carregado por `http_headers_helper` de um arquivo privado fora desse workspace, sem exportação manual. A pasta foi marcada como confiável para carregar sua configuração de projeto. `codex` ou `./iniciar-codex` iniciam o cliente ali. Separação de contexto e instruções não equivalem a isolamento de filesystem.
 
 ## Reprodução
 
@@ -94,8 +96,8 @@ No AAP, remova os templates CAIXA, inventário, projeto e credencial da organiza
 
 ## Painel do apresentador
 
-Abra http://52.91.33.162:8080/demo ou o link no cadastro. Os botões **Parar banco**, **Ativar erro de validação** e **Provocar OOM** reproduzem os três incidentes. Execute um cenário por vez. Peça à IA o diagnóstico usando o prompt disponível no painel e acompanhe os jobs AAP. O painel não recupera automaticamente banco ou Java.
+Abra http://52.91.33.162:8080/demo ou o link no cadastro. **Parar banco** e **Provocar OOM** reproduzem incidentes de serviços. O card de validação abre o cadastro com `email-invalido` preenchido; informe um nome e clique em Cadastrar. Também é possível digitar qualquer e-mail inválido diretamente no formulário. O formulário deixa a validação com o servidor para tornar o erro demonstrável.
 
-O painel/proxy Python escuta em 8080 e permanece ativo quando a JVM encerra. O Java atende somente em 127.0.0.1:8081. Durante OOM, o cadastro e `/health` retornam 503 pelo proxy; `/demo` permanece acessível. Indicadores exibem o estado dos serviços; a verificação funcional é feita pelo cadastro e pelos jobs Ansible. A conta `caixapanel` só pode elevar privilégios para cinco comandos fixos do helper root-owned. Sem token administrativo no navegador.
+Não há mais ativação/limpeza de falha de validação. E-mail inválido gera exceção e HTTP 500; e-mail válido continua funcionando. A mensagem da exceção não contém o valor informado. O navegador recebe erro genérico e request ID, enquanto o stack trace fica no journal para coleta pelo Ansible.
 
-Após a análise do erro de validação, **Limpar erro de validação** prepara a próxima rodada; isso desativa o defeito proposital e não representa uma correção de código pela IA. Para banco e OOM, a recuperação continua pelos templates operacionais via MCP. O isolamento de heap e o gatilho consumido antes da alocação impedem a falha de derrubar o painel ou se repetir após restart.
+O painel/proxy Python escuta em 8080 e permanece ativo quando a JVM encerra. Java atende somente em 127.0.0.1:8081. A conta caixapanel tem somente três comandos fixos: status, parar banco e armar OOM. Nenhum token AAP ou senha do banco chega ao navegador. O painel oferece prompt neutro, sem listar as causas ou a solução de cada incidente. Recuperações continuam via MCP/AAP, sem execução automática pelo painel.

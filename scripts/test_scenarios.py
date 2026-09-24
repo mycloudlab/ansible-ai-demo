@@ -16,13 +16,13 @@ state=json.loads(Path('.private/aws-state.json').read_text());app='http://'+stat
 def health():
  try:return requests.get(app+'/health',timeout=5).status_code
  except requests.RequestException:return -1
-def register():return requests.post(app+'/people',data={'name':'Pessoa Teste','email':'teste@example.invalid'},timeout=8).status_code
+def register(email='teste@example.invalid'):return requests.post(app+'/people',data={'name':'Pessoa Teste','email':email},timeout=8).status_code
 run('verify',runtime);assert health()==200 and register()==201
 run('fault_database_stop');assert health()==503 and register()==503
 out=run('diagnose',runtime);assert 'DATABASE_UNAVAILABLE' in out and 'inactive' in out
 run('recover_database',runtime);assert health()==200 and register()==201
-run('fault_validation');assert health()==200 and register()==500
-out=run('validation_evidence',runtime);assert 'VALIDATION_RULE_DEMO' in out and '500' in out
+run('fault_validation');assert health()==200 and register('email-invalido')==500 and register()==201
+out=run('validation_evidence',runtime);assert 'EmailValidationException' in out and '500' in out
 run('reset_validation');assert register()==201
 run('fault_oom_once')
 for _ in range(15):

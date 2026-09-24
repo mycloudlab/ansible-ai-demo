@@ -1,16 +1,14 @@
-- name: fault_validation
+- name: Reproduce registration failure using malformed email
   hosts: caixa_demo
   become: true
   gather_facts: false
   pre_tasks:
-  - ansible.builtin.import_tasks: tasks/guard.yml
+    - ansible.builtin.import_tasks: tasks/guard.yml
   tasks:
-  - name: Arm explicitly requested demo fault
-    ansible.builtin.copy:
-      dest: /var/lib/caixa-demo/control/validation-fault
-      content: 'one-shot
-
-        '
-      owner: caixademo
-      group: caixademo
-      mode: '0600'
+    - name: Submit fictional malformed email
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8080/people
+        method: POST
+        body_format: form-urlencoded
+        body: {name: Pessoa Teste, email: email-invalido}
+        status_code: 500

@@ -125,13 +125,13 @@
         owner: root
         group: root
         mode: '0644'
-    - name: Allow only the five explicit demo helper commands
+    - name: Allow only the three explicit demo helper commands
       ansible.builtin.copy:
         dest: /etc/sudoers.d/caixa-demo-panel
         mode: '0440'
         validate: /usr/sbin/visudo -cf %s
         content: |
-          caixapanel ALL=(root) NOPASSWD: /usr/bin/python3 /opt/caixa-demo-panel/control.py status, /usr/bin/python3 /opt/caixa-demo-panel/control.py database, /usr/bin/python3 /opt/caixa-demo-panel/control.py validation, /usr/bin/python3 /opt/caixa-demo-panel/control.py oom, /usr/bin/python3 /opt/caixa-demo-panel/control.py reset-validation
+          caixapanel ALL=(root) NOPASSWD: /usr/bin/python3 /opt/caixa-demo-panel/control.py status, /usr/bin/python3 /opt/caixa-demo-panel/control.py database, /usr/bin/python3 /opt/caixa-demo-panel/control.py oom
     - name: Install independent presenter service
       ansible.builtin.template:
         src: caixa-demo-panel.service.j2

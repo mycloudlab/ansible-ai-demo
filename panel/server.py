@@ -4,7 +4,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 LOCK = threading.Lock()
-ACTIONS = {'database', 'validation', 'oom', 'reset-validation'}
+ACTIONS = {'database', 'oom'}
 def control(action):
     return subprocess.run(['/usr/bin/sudo', '-n', '/usr/bin/python3', '/opt/caixa-demo-panel/control.py', action], capture_output=True, text=True, timeout=25)
 class Handler(BaseHTTPRequestHandler):

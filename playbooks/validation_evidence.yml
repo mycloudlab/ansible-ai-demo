@@ -12,7 +12,7 @@
       body_format: form-urlencoded
       body:
         name: Pessoa Teste
-        email: teste@example.invalid
+        email: email-invalido
       status_code:
       - 201
       - 400
@@ -37,10 +37,10 @@
   - name: Prepare evidence for development, without sending a ticket
     ansible.builtin.debug:
       msg:
-        reproduction: POST /people with fictional valid name/email
-        expected_status: 201
+        reproduction: POST /people with fictional name and malformed email
+        expected_status: 400
         observed_status: '{{ reproduction.status }}'
         request_id: '{{ reproduction.x_request_id | default("unavailable") }}'
         logs: '{{ logs.stdout_lines }}'
-        analysis: VALIDATION_RULE_DEMO indicates the intentionally faulty validation
-          path when correlated with request ID. No ticket was sent.
+        analysis: Compare expected and observed HTTP status, correlate the request ID
+          with log entries and report the evidence. Do not infer a cause without evidence.
