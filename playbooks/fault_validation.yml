@@ -1,0 +1,16 @@
+- name: fault_validation
+  hosts: caixa_demo
+  become: true
+  gather_facts: false
+  pre_tasks:
+  - ansible.builtin.import_tasks: tasks/guard.yml
+  tasks:
+  - name: Arm explicitly requested demo fault
+    ansible.builtin.copy:
+      dest: /var/lib/caixa-demo/control/validation-fault
+      content: 'one-shot
+
+        '
+      owner: caixademo
+      group: caixademo
+      mode: '0600'

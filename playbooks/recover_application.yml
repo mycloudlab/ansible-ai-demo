@@ -1,0 +1,32 @@
+- name: recover_application
+  hosts: caixa_demo
+  become: true
+  gather_facts: false
+  pre_tasks:
+  - ansible.builtin.import_tasks: tasks/guard.yml
+  tasks:
+  - name: Preserve pre-restart evidence
+    ansible.builtin.command:
+      argv:
+      - journalctl
+      - -u
+      - caixa-demo
+      - -n
+      - '80'
+      - --no-pager
+    register: before
+    changed_when: false
+    failed_when: false
+  - ansible.builtin.debug:
+      var: before.stdout_lines
+  - name: Prevent automatic replay of one-shot fault
+    ansible.builtin.file:
+      path: /var/lib/caixa-demo/control/oom-once
+      state: absent
+  - name: Restart isolated application
+    ansible.builtin.systemd_service:
+      name: caixa-demo
+      state: restarted
+  - ansible.builtin.import_tasks: tasks/verify.yml
+  - ansible.builtin.debug:
+      msg: Restart is mitigation, not a fix for a memory leak or excessive consumption.

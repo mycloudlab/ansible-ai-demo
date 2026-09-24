@@ -1,0 +1,16 @@
+- name: fault_oom_once
+  hosts: caixa_demo
+  become: true
+  gather_facts: false
+  pre_tasks:
+  - ansible.builtin.import_tasks: tasks/guard.yml
+  tasks:
+  - name: Arm explicitly requested demo fault
+    ansible.builtin.copy:
+      dest: /var/lib/caixa-demo/control/oom-once
+      content: 'one-shot
+
+        '
+      owner: caixademo
+      group: caixademo
+      mode: '0600'

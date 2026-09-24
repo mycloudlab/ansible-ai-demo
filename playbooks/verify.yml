@@ -1,0 +1,8 @@
+- name: verify
+  hosts: caixa_demo
+  become: true
+  gather_facts: false
+  pre_tasks:
+  - ansible.builtin.import_tasks: tasks/guard.yml
+  tasks:
+  - ansible.builtin.import_tasks: tasks/verify.yml

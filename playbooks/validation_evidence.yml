@@ -1,0 +1,46 @@
+- name: validation_evidence
+  hosts: caixa_demo
+  become: true
+  gather_facts: false
+  pre_tasks:
+  - ansible.builtin.import_tasks: tasks/guard.yml
+  tasks:
+  - name: Reproduce with fictional input
+    ansible.builtin.uri:
+      url: http://127.0.0.1:8080/people
+      method: POST
+      body_format: form-urlencoded
+      body:
+        name: Pessoa Teste
+        email: teste@example.invalid
+      status_code:
+      - 201
+      - 400
+      - 500
+      - 503
+      return_content: true
+    register: reproduction
+  - name: Collect bounded validation log
+    ansible.builtin.command:
+      argv:
+      - journalctl
+      - -u
+      - caixa-demo
+      - --since
+      - 5 minutes ago
+      - -n
+      - '80'
+      - --no-pager
+    register: logs
+    changed_when: false
+    failed_when: false
+  - name: Prepare evidence for development, without sending a ticket
+    ansible.builtin.debug:
+      msg:
+        reproduction: POST /people with fictional valid name/email
+        expected_status: 201
+        observed_status: '{{ reproduction.status }}'
+        request_id: '{{ reproduction.x_request_id | default("unavailable") }}'
+        logs: '{{ logs.stdout_lines }}'
+        analysis: VALIDATION_RULE_DEMO indicates the intentionally faulty validation
+          path when correlated with request ID. No ticket was sent.

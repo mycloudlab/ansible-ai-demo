@@ -1,0 +1,114 @@
+- name: Deploy the isolated Java and PostgreSQL demo
+  hosts: caixa_demo
+  become: true
+  gather_facts: false
+  pre_tasks:
+    - ansible.builtin.import_tasks: tasks/guard.yml
+  tasks:
+    - name: Install supported operating-system packages
+      ansible.builtin.apt:
+        name: [openjdk-17-jdk-headless, maven, postgresql, python3-psycopg2]
+        update_cache: true
+    - name: Create application account
+      ansible.builtin.user:
+        name: caixademo
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+    - name: Create application directories
+      ansible.builtin.file:
+        path: '{{ item }}'
+        state: directory
+        owner: caixademo
+        group: caixademo
+        mode: '0750'
+      loop: [/var/lib/caixa-demo, /var/lib/caixa-demo/control, /opt/caixa-demo, /opt/caixa-demo-src]
+    - name: Copy reproducible Maven build sources
+      ansible.builtin.copy:
+        src: '{{ item.src }}'
+        dest: '{{ item.dest }}'
+        mode: preserve
+      loop:
+        - {src: '../pom.xml', dest: '/opt/caixa-demo-src/pom.xml'}
+        - {src: '../src/', dest: '/opt/caixa-demo-src/src/'}
+    - name: Compile and test Java application
+      ansible.builtin.command: mvn -q package
+      args:
+        chdir: /opt/caixa-demo-src
+      environment:
+        MAVEN_OPTS: -Xmx384m
+      changed_when: true
+    - name: Install executable application
+      ansible.builtin.copy:
+        remote_src: true
+        src: /opt/caixa-demo-src/target/ansible-ai-demo-1.0.0.jar
+        dest: /opt/caixa-demo/application.jar
+        mode: '0644'
+    - name: Generate local database credential once
+      ansible.builtin.shell: |
+        umask 077
+        printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 24)" > /etc/caixa-demo.env
+      args:
+        creates: /etc/caixa-demo.env
+      no_log: true
+    - name: Read local secret for database initialization
+      ansible.builtin.slurp:
+        src: /etc/caixa-demo.env
+      register: demo_secret
+      no_log: true
+    - name: Start PostgreSQL
+      ansible.builtin.systemd_service:
+        name: postgresql
+        state: started
+        enabled: true
+    - name: Initialize restricted database user
+      become_user: postgres
+      ansible.builtin.shell: |
+        psql -v ON_ERROR_STOP=1 <<'SQL'
+        DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname='caixademo') THEN CREATE ROLE caixademo LOGIN; END IF; END $$;
+        ALTER ROLE caixademo PASSWORD '{{ (demo_secret.content | b64decode).split('=')[1] | trim }}';
+        SQL
+      no_log: true
+      changed_when: true
+    - name: Create database once
+      become_user: postgres
+      ansible.builtin.shell: psql -tAc "SELECT 1 FROM pg_database WHERE datname='caixademo'" | grep -q 1 || createdb -O caixademo caixademo
+      changed_when: false
+    - name: Create schema and grant application access
+      become_user: postgres
+      ansible.builtin.command:
+        argv:
+          - psql
+          - -v
+          - ON_ERROR_STOP=1
+          - -d
+          - caixademo
+          - -c
+          - CREATE TABLE IF NOT EXISTS people(id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, name varchar(100) NOT NULL, email varchar(160) NOT NULL, created_at timestamptz NOT NULL DEFAULT now()); GRANT SELECT, INSERT ON people TO caixademo; GRANT USAGE ON SEQUENCE people_id_seq TO caixademo;
+      changed_when: false
+    - name: Constrain database memory
+      ansible.builtin.copy:
+        dest: /etc/postgresql/16/main/conf.d/caixa-demo.conf
+        content: "shared_buffers = '64MB'\nmax_connections = 20\nwork_mem = '2MB'\nlisten_addresses = '127.0.0.1'\n"
+        mode: '0644'
+    - name: Restart PostgreSQL cluster
+      ansible.builtin.systemd_service:
+        name: postgresql@16-main
+        state: restarted
+    - name: Install memory-isolated application service
+      ansible.builtin.template:
+        src: caixa-demo.service.j2
+        dest: /etc/systemd/system/caixa-demo.service
+        mode: '0644'
+    - name: Clear all fault controls for deployment baseline
+      ansible.builtin.file:
+        path: '/var/lib/caixa-demo/control/{{ item }}'
+        state: absent
+      loop: [validation-fault, oom-once]
+    - name: Start application
+      ansible.builtin.systemd_service:
+        name: caixa-demo
+        state: restarted
+        enabled: true
+        daemon_reload: true
+    - ansible.builtin.import_tasks: tasks/verify.yml

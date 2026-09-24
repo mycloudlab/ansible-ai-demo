@@ -1,0 +1,11 @@
+- name: Identify AAP execution egress for SSH allowlist
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+  - ansible.builtin.uri:
+      url: https://checkip.amazonaws.com
+      return_content: true
+    register: egress
+  - ansible.builtin.debug:
+      msg: AAP_EGRESS={{ egress.content | trim }}

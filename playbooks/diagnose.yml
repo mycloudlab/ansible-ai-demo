@@ -1,0 +1,59 @@
+- name: diagnose
+  hosts: caixa_demo
+  become: true
+  gather_facts: false
+  pre_tasks:
+  - ansible.builtin.import_tasks: tasks/guard.yml
+  tasks:
+  - name: Inspect service state and memory limits
+    ansible.builtin.command:
+      argv:
+      - systemctl
+      - show
+      - caixa-demo
+      - postgresql@16-main
+      - --property=Id,ActiveState,SubState,Result,ExecMainStatus,MemoryCurrent,MemoryPeak,MemoryMax
+    register: services
+    changed_when: false
+    failed_when: false
+  - name: Read bounded application evidence
+    ansible.builtin.command:
+      argv:
+      - journalctl
+      - -u
+      - caixa-demo
+      - --since
+      - 15 minutes ago
+      - -n
+      - '150'
+      - --no-pager
+      - -o
+      - short-iso
+    register: logs
+    changed_when: false
+    failed_when: false
+  - name: Inspect database readiness
+    ansible.builtin.command:
+      argv:
+      - pg_isready
+      - -h
+      - 127.0.0.1
+      - -p
+      - '5432'
+    register: database
+    changed_when: false
+    failed_when: false
+  - name: Check HTTP without failing investigation
+    ansible.builtin.uri:
+      url: http://127.0.0.1:8080/health
+      return_content: true
+    register: health
+    failed_when: false
+  - name: Publish bounded evidence
+    ansible.builtin.debug:
+      msg:
+        services: '{{ services.stdout_lines }}'
+        logs: '{{ logs.stdout_lines }}'
+        database: '{{ database.stdout }}'
+        health_status: '{{ health.status | default(-1) }}'
+        health: '{{ health.content | default("unreachable") }}'

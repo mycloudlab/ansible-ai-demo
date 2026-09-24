@@ -1,0 +1,21 @@
+[Unit]
+Description=CAIXA Java troubleshooting demo
+After=network.target postgresql.service
+[Service]
+User=caixademo
+Group=caixademo
+EnvironmentFile=/etc/caixa-demo.env
+ExecStart=/usr/bin/java -Xms32m -Xmx96m -XX:+ExitOnOutOfMemoryError -jar /opt/caixa-demo/application.jar
+WorkingDirectory=/var/lib/caixa-demo
+MemoryMax=256M
+MemorySwapMax=0
+TasksMax=64
+CPUQuota=100%
+Restart=no
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/caixa-demo
+[Install]
+WantedBy=multi-user.target

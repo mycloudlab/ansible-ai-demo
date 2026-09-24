@@ -1,0 +1,23 @@
+- name: Verify application and database health
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8080/health
+    status_code: 200
+    return_content: true
+  register: health
+  retries: 10
+  delay: 2
+  until: health.status == 200
+- name: Exercise registration with fictional data
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8080/people
+    method: POST
+    body_format: form-urlencoded
+    body: {name: 'Pessoa Demonstração', email: 'demo@example.invalid'}
+    status_code: 201
+  register: registration
+- name: Report verification
+  ansible.builtin.debug:
+    msg:
+      health: '{{ health.json }}'
+      registration_status: '{{ registration.status }}'
+      request_id: '{{ registration.x_request_id | default("unavailable") }}'

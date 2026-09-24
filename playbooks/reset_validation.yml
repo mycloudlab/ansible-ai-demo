@@ -1,0 +1,12 @@
+- name: reset_validation
+  hosts: caixa_demo
+  become: true
+  gather_facts: false
+  pre_tasks:
+  - ansible.builtin.import_tasks: tasks/guard.yml
+  tasks:
+  - name: Remove intentional validation defect for next demo
+    ansible.builtin.file:
+      path: /var/lib/caixa-demo/control/validation-fault
+      state: absent
+  - ansible.builtin.import_tasks: tasks/verify.yml

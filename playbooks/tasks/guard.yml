@@ -1,0 +1,6 @@
+- name: Restrict all operations to the single demo host
+  ansible.builtin.assert:
+    that:
+      - inventory_hostname == 'caixa-demo'
+      - groups['caixa_demo'] | length == 1
+    fail_msg: This playbook only accepts the fixed CAIXA demo inventory.
