@@ -26,6 +26,7 @@ Os testes abaixo ocorreram no ambiente real AWS/AAP, com tráfego HTTP do operad
 - Defeito de validação: saúde 200, cadastro válido 500; evidência identificou `VALIDATION_RULE_DEMO`, status e request ID. Reset restaurou 201.
 - OOM: endpoint tornou-se indisponível; log confirmou `OOM_DEMO_TRIGGER_CONSUMED` e `OutOfMemoryError`; recuperação restaurou saúde/cadastro e não houve redisparo após espera adicional. Isso comprova o cenário de heap da JVM, não um OOM do kernel.
 - PAT operacional: tentativas de launch dos templates deploy, fault_database_stop, fault_validation, fault_oom_once e reset_validation foram negadas (403/404).
+- Escopo do token: listagem retornou exatamente cinco templates operacionais. Launch de diagnóstico com `extra_vars` e `limit` retornou ambos explicitamente ignorados pelo AAP (job 20), mantendo variáveis vazias e inventário fixo.
 - Java: 3 testes unitários passaram, cobrindo entrada válida, distinção entre entrada inválida e falha deliberada, e formulário Unicode. Build também executado na EC2 pelo AAP.
 - Sintaxe: todos os playbooks passaram; scripts Python compilaram e scripts Bash passaram `bash -n`.
 
