@@ -1,0 +1,18 @@
+base_url: https://aap-aap.apps.cluster-drjqz.dyn.redhatworkshops.io
+ignore-certificate-errors: false
+services:
+- name: controller
+  local_path: data/controller-schema.json
+  enabled: true
+- name: gateway
+  enabled: false
+- name: galaxy
+  enabled: false
+- name: eda
+  enabled: false
+toolsets:
+  caixa_demo:
+  - controller.job_templates_list
+  - controller.job_templates_launch_create
+  - controller.jobs_retrieve
+  - controller.jobs_stdout_retrieve

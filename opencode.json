@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "aap": {
+      "type": "remote",
+      "url": "http://127.0.0.1:3017/mcp/caixa_demo",
+      "enabled": true,
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:AAP_TOKEN}"
+      }
+    }
+  }
+}

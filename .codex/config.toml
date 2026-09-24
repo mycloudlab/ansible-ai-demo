@@ -1,0 +1,4 @@
+[mcp_servers.aap]
+url = "http://127.0.0.1:3017/mcp/caixa_demo"
+bearer_token_env_var = "AAP_TOKEN"
+enabled_tools = ["job_templates_list", "job_templates_launch_create", "jobs_retrieve", "jobs_stdout_retrieve"]
