@@ -5,6 +5,8 @@ After=network.target postgresql.service
 User=caixademo
 Group=caixademo
 EnvironmentFile=/etc/caixa-demo.env
+Environment=PORT=8081
+Environment=BIND_ADDRESS=127.0.0.1
 ExecStart=/usr/bin/java -Xms32m -Xmx96m -XX:+ExitOnOutOfMemoryError -jar /opt/caixa-demo/application.jar
 WorkingDirectory=/var/lib/caixa-demo
 MemoryMax=256M

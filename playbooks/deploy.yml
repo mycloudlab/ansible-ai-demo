@@ -105,9 +105,47 @@
         path: '/var/lib/caixa-demo/control/{{ item }}'
         state: absent
       loop: [validation-fault, oom-once]
+    - name: Create presenter service account
+      ansible.builtin.user:
+        name: caixapanel
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+    - name: Create root-owned panel directory
+      ansible.builtin.file:
+        path: /opt/caixa-demo-panel
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+    - name: Install presenter panel and fixed control helper
+      ansible.builtin.copy:
+        src: ../panel/
+        dest: /opt/caixa-demo-panel/
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Allow only the five explicit demo helper commands
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/caixa-demo-panel
+        mode: '0440'
+        validate: /usr/sbin/visudo -cf %s
+        content: |
+          caixapanel ALL=(root) NOPASSWD: /usr/bin/python3 /opt/caixa-demo-panel/control.py status, /usr/bin/python3 /opt/caixa-demo-panel/control.py database, /usr/bin/python3 /opt/caixa-demo-panel/control.py validation, /usr/bin/python3 /opt/caixa-demo-panel/control.py oom, /usr/bin/python3 /opt/caixa-demo-panel/control.py reset-validation
+    - name: Install independent presenter service
+      ansible.builtin.template:
+        src: caixa-demo-panel.service.j2
+        dest: /etc/systemd/system/caixa-demo-panel.service
+        mode: '0644'
     - name: Start application
       ansible.builtin.systemd_service:
         name: caixa-demo
+        state: restarted
+        enabled: true
+        daemon_reload: true
+    - name: Start presenter panel after Java releases port 8080
+      ansible.builtin.systemd_service:
+        name: caixa-demo-panel
         state: restarted
         enabled: true
         daemon_reload: true

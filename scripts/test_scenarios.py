@@ -26,9 +26,9 @@ out=run('validation_evidence',runtime);assert 'VALIDATION_RULE_DEMO' in out and 
 run('reset_validation');assert register()==201
 run('fault_oom_once')
 for _ in range(15):
- if health()==-1:break
+ if health()==503:break
  time.sleep(1)
-assert health()==-1
+assert health()==503
 out=run('diagnose',runtime);assert 'OOM_DEMO_TRIGGER_CONSUMED' in out and 'OutOfMemoryError' in out
 run('recover_application',runtime);assert health()==200 and register()==201
 time.sleep(5);assert health()==200

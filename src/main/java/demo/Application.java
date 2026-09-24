@@ -26,7 +26,7 @@ public final class Application {
             if(path.equals("/")&&x.getRequestMethod().equals("GET")){reply(x,200,"""
                 <!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>CAIXA AI — laboratório</title>
                 <style>body{font:20px sans-serif;background:#151515;color:#eee;max-width:700px;margin:60px auto}h1{color:#ff6874}input,button{display:block;margin:18px 0;padding:12px;font:inherit}button{background:#ad1420;color:white;border:0}pre{white-space:pre-wrap}</style>
-                <h1>Cadastro de pessoas</h1><p>Ambiente de demonstração. Use apenas dados fictícios.</p>
+                <p><a href="/demo" style="color:#ff999d">Painel da demonstração →</a></p><h1>Cadastro de pessoas</h1><p>Ambiente de demonstração. Use apenas dados fictícios.</p>
                 <form id="form"><label>Nome<input name="name" required maxlength="100"></label><label>E-mail<input name="email" type="email" required maxlength="160"></label><button>Cadastrar</button></form><pre id="result"></pre>
                 <script>document.querySelector('#form').onsubmit=async e=>{e.preventDefault();try{let r=await fetch('/people',{method:'POST',body:new URLSearchParams(new FormData(e.target))});document.querySelector('#result').textContent='HTTP '+r.status+'\\n'+await r.text()+'\\nID: '+r.headers.get('X-Request-Id')}catch(e){document.querySelector('#result').textContent='Serviço indisponível'}};</script></html>
                 ""","text/html");return;}
@@ -45,7 +45,7 @@ public final class Application {
     }
     public static void main(String[] args)throws Exception {
         Files.createDirectories(CONTROL);
-        var server=HttpServer.create(new InetSocketAddress(Integer.parseInt(System.getenv().getOrDefault("PORT","8080"))),32);
+        var server=HttpServer.create(new InetSocketAddress(System.getenv().getOrDefault("BIND_ADDRESS","127.0.0.1"),Integer.parseInt(System.getenv().getOrDefault("PORT","8080"))),32);
         server.createContext("/",Application::handle);server.setExecutor(Executors.newFixedThreadPool(4));server.start();log("APP_STARTED","startup");
         Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(()->{
             try {if(Files.deleteIfExists(CONTROL.resolve("oom-once"))){log("OOM_DEMO_TRIGGER_CONSUMED","fault");var allocations=new ArrayList<byte[]>();while(true)allocations.add(new byte[1024*1024]);}}

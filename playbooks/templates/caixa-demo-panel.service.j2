@@ -1,0 +1,16 @@
+[Unit]
+Description=CAIXA demo presenter panel and application proxy
+After=network.target
+[Service]
+User=caixapanel
+Group=caixapanel
+ExecStart=/usr/bin/python3 /opt/caixa-demo-panel/server.py
+Restart=on-failure
+MemoryMax=96M
+TasksMax=48
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/caixa-demo/control
+[Install]
+WantedBy=multi-user.target

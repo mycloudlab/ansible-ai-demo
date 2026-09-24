@@ -74,7 +74,7 @@ Pré-requisitos do operador: AWS CLI autenticado por profile/ambiente, Python 3 
 5. `python3 scripts/test_scenarios.py`: realiza os três cenários e confirma negações de RBAC. Exige credenciais de administrador para injetar falhas, PAT para operar e acesso HTTP permitido ao operador. Resultados/jobs ficam em `.private/`.
 6. Instale o MCP e execute os comandos da seção anterior. `DIAGNOSE_TEMPLATE_ID` substitui o ID 13 no teste para outra instalação.
 
-Para compilar localmente: `mvn test package`. Os playbooks usam módulos builtin e não dependem de collections adicionais. Não há endpoint HTTP para injetar falhas; os controles são arquivos locais acessados pelos playbooks administrativos.
+Para compilar localmente: `mvn test package`. Os playbooks usam módulos builtin e não dependem de collections adicionais. O painel `/demo` oferece endpoints restritos à rede autorizada para os três cenários, com verificação de origem e cabeçalho de controle. O serviço do painel usa um helper de comandos fixos; não recebe token AAP ou senha do banco. Os playbooks administrativos continuam disponíveis.
 
 ## Custos e encerramento
 
@@ -91,3 +91,11 @@ systemctl --user disable --now caixa-demo-mcp
 ```
 
 No AAP, remova os templates CAIXA, inventário, projeto e credencial da organização CAIXA AI Demo; revogue o PAT e remova o usuário `caixa-demo-agent`, depois a organização. Não remover objetos Default/APD do workshop. Preserve evidências desejadas antes de remover recursos, token e chave local. O teardown não foi executado.
+
+## Painel do apresentador
+
+Abra http://52.91.33.162:8080/demo ou o link no cadastro. Os botões **Parar banco**, **Ativar erro de validação** e **Provocar OOM** reproduzem os três incidentes. Execute um cenário por vez. Peça à IA o diagnóstico usando o prompt disponível no painel e acompanhe os jobs AAP. O painel não recupera automaticamente banco ou Java.
+
+O painel/proxy Python escuta em 8080 e permanece ativo quando a JVM encerra. O Java atende somente em 127.0.0.1:8081. Durante OOM, o cadastro e `/health` retornam 503 pelo proxy; `/demo` permanece acessível. Indicadores exibem o estado dos serviços; a verificação funcional é feita pelo cadastro e pelos jobs Ansible. A conta `caixapanel` só pode elevar privilégios para cinco comandos fixos do helper root-owned. Sem token administrativo no navegador.
+
+Após a análise do erro de validação, **Limpar erro de validação** prepara a próxima rodada; isso desativa o defeito proposital e não representa uma correção de código pela IA. Para banco e OOM, a recuperação continua pelos templates operacionais via MCP. O isolamento de heap e o gatilho consumido antes da alocação impedem a falha de derrubar o painel ou se repetir após restart.
